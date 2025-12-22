@@ -1,0 +1,5 @@
+{
+  "name": "Chronos Task Tracker",
+  "description": "A productivity tool to track tasks, time, and tags with monthly CSV exports. Designed with a clean JetBrains Mono interface.",
+  "requestFramePermissions": []
+}
