@@ -221,6 +221,9 @@ Thank you for contributing to Chronos Task Tracker! 🎉
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) file for details.
 
+## Disclaimer
+
+I built this app for my own personal use. I've been using this app for more than one week, and I feel it may be useful to others. Thus, I decided to share this app. Also, I've used Google AI Studio at the initial phase of building this app and later used Cursor for fine-tuning this app.
 
 ---
 
