@@ -60,6 +60,14 @@ const App: React.FC = () => {
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Helper to get local date string YYYY-MM-DD
+  const getLocalDate = () => {
+    const d = new Date();
+    const offset = d.getTimezoneOffset();
+    const local = new Date(d.getTime() - (offset * 60 * 1000));
+    return local.toISOString().split('T')[0];
+  };
+
   // Initialize: Load list of workspaces
   useEffect(() => {
     const storedWorkspaces = getStoredWorkspaces();
@@ -143,22 +151,24 @@ const App: React.FC = () => {
 
   // Calculate chart data for history view (Trailing 7 Days)
   const chartData = useMemo(() => {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const dailyStats = [];
+    // Generate last 7 days based on local time
+    for (let i = 6; i >= 0; i--) {
       const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      return d.toISOString().split('T')[0];
-    });
-
-    const dailyStats = last7Days.map(date => {
-      const dayTotal = history
-        .filter(r => r.date === date)
-        .reduce((sum, r) => sum + r.duration, 0);
+      d.setDate(d.getDate() - i);
+      const offset = d.getTimezoneOffset();
+      const local = new Date(d.getTime() - (offset * 60 * 1000));
+      const dateStr = local.toISOString().split('T')[0];
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
       
-      const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'short' });
-      return { date, dayName, duration: dayTotal };
-    });
+      const dayTotal = history
+        .filter(r => r.date === dateStr)
+        .reduce((sum, r) => sum + r.duration, 0);
 
-    const maxDuration = Math.max(...dailyStats.map(d => d.duration), 1);
+      dailyStats.push({ date: dateStr, dayName, duration: dayTotal });
+    }
+
+    const maxDuration = Math.max(...dailyStats.map(d => d.duration), 3600); // Minimum scale of 1 hour
     return { dailyStats, maxDuration };
   }, [history]);
 
@@ -220,7 +230,7 @@ const App: React.FC = () => {
       endTime: null,
       duration: 0,
       tags: [...tags],
-      date: new Date().toISOString().split('T')[0]
+      date: getLocalDate()
     };
     setActiveTask(newTask);
     setTaskInput('');
@@ -483,26 +493,33 @@ const App: React.FC = () => {
               </div>
               
               <div className="flex items-end justify-between h-32 gap-2 px-2 pt-4">
-                {chartData.dailyStats.map((day) => (
-                  <div key={day.date} className="flex flex-col items-center flex-1 group relative">
-                    <div 
-                      className="w-full bg-slate-50 group-hover:bg-slate-100 rounded-t-lg transition-all relative"
-                      style={{ height: '100%' }}
-                    >
+                {chartData.dailyStats.map((day) => {
+                  const hours = day.duration / 3600;
+                  // If duration is 0, we still want a small visible hint or just the background track.
+                  // The background track is bg-slate-100, which is visible.
+                  const percentage = Math.max((day.duration / chartData.maxDuration) * 100, 0);
+                  
+                  return (
+                    <div key={day.date} className="flex flex-col items-center flex-1 group relative h-full justify-end">
                       <div 
-                        className="absolute bottom-0 w-full bg-indigo-600 rounded-t-lg transition-all duration-700 ease-out shadow-[0_0_10px_rgba(79,70,229,0.3)]"
-                        style={{ height: `${(day.duration / chartData.maxDuration) * 100}%` }}
+                        className="w-full bg-slate-100 rounded-t-lg relative flex items-end overflow-hidden"
+                        style={{ height: '100%' }}
                       >
-                        {day.duration > 0 && (
-                          <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[8px] font-black px-1.5 py-1 rounded whitespace-nowrap z-20 transition-opacity">
-                            {Math.round(day.duration / 60)}m
-                          </div>
-                        )}
+                        <div 
+                          className="w-full bg-indigo-600 rounded-t-lg transition-all duration-700 ease-out"
+                          style={{ height: `${percentage}%` }}
+                        >
+                          {day.duration > 0 && (
+                            <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 text-white text-[10px] font-black px-2 py-1 rounded-lg whitespace-nowrap z-20 transition-opacity pointer-events-none">
+                              {hours < 0.1 ? '<0.1h' : `${hours.toFixed(1)}h`}
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      <span className="text-[9px] font-black text-slate-400 mt-3 uppercase">{day.dayName}</span>
                     </div>
-                    <span className="text-[9px] font-black text-slate-400 mt-3 uppercase">{day.dayName}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
