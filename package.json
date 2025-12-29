@@ -3,12 +3,19 @@
   "name": "chronos-task-tracker",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "lucide-react": "^0.344.0",
     "@vercel/analytics": "^1.4.1",
-    "@vercel/speed-insights": "^1.1.0"
+    "@vercel/speed-insights": "^1.1.0",
+    "vite": "^5.0.0",
+    "@vitejs/plugin-react": "^4.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.1",
