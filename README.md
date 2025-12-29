@@ -2,6 +2,8 @@
 
 A modern, productivity-focused task and time tracking application built with React and TypeScript. Track your work sessions across multiple workspaces with a clean, minimalist interface.
 
+🌐 **Live Demo**: [https://chronos-task-tracker.vercel.app/](https://chronos-task-tracker.vercel.app/)
+
 ## Features
 
 - **Multi-Workspace Support**: Organize your tasks across different workspaces (e.g., Personal, Work, Projects)
@@ -126,6 +128,8 @@ Each workspace stores:
 ## Deployment
 
 This project is configured for deployment on Vercel. The build script (`vite build`) will automatically be used during deployment.
+
+**Live Application**: [https://chronos-task-tracker.vercel.app/](https://chronos-task-tracker.vercel.app/)
 
 ### Vercel Deployment
 
