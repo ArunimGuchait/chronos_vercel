@@ -1,35 +1,61 @@
 
-import { TaskRecord } from '../types';
+import { TaskRecord, WorkspaceData } from '../types';
+import { STORAGE_PREFIX, WORKSPACES_KEY, LEGACY_KEY } from '../constants';
 
-const STORAGE_PREFIX = 'chronos_ws_';
-const WORKSPACES_KEY = 'chronos_workspaces';
-const LEGACY_KEY = 'chronos_app_state';
+// Error handling wrapper for localStorage operations
+const safeLocalStorageGet = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.error(`Failed to read from localStorage (${key}):`, error);
+    return null;
+  }
+};
+
+const safeLocalStorageSet = (key: string, value: string): boolean => {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (error) {
+    console.error(`Failed to write to localStorage (${key}):`, error);
+    return false;
+  }
+};
+
+const safeLocalStorageRemove = (key: string): boolean => {
+  try {
+    localStorage.removeItem(key);
+    return true;
+  } catch (error) {
+    console.error(`Failed to remove from localStorage (${key}):`, error);
+    return false;
+  }
+};
 
 // Initialize and migrate legacy data if necessary
 export const getStoredWorkspaces = (): string[] => {
-  const workspacesJson = localStorage.getItem(WORKSPACES_KEY);
+  const workspacesJson = safeLocalStorageGet(WORKSPACES_KEY);
   
   // Check for legacy data if no new structure exists
   if (!workspacesJson) {
-    const legacy = localStorage.getItem(LEGACY_KEY);
+    const legacy = safeLocalStorageGet(LEGACY_KEY);
     if (legacy) {
       try {
         const parsed = JSON.parse(legacy);
         const name = parsed.workspaceName || 'Main Workspace';
         
         // Migrate data
-        const newData = {
-          activeTask: parsed.activeTask,
-          history: parsed.history,
-          lastExportedMonth: parsed.lastExportedMonth
+        const newData: WorkspaceData = {
+          activeTask: parsed.activeTask || null,
+          history: parsed.history || [],
+          lastExportedMonth: parsed.lastExportedMonth || null
         };
-        localStorage.setItem(`${STORAGE_PREFIX}${name}`, JSON.stringify(newData));
-        localStorage.setItem(WORKSPACES_KEY, JSON.stringify([name]));
         
-        // Optional: Remove legacy key after successful migration
-        // localStorage.removeItem(LEGACY_KEY); 
-        
-        return [name];
+        const dataJson = JSON.stringify(newData);
+        if (safeLocalStorageSet(`${STORAGE_PREFIX}${name}`, dataJson)) {
+          safeLocalStorageSet(WORKSPACES_KEY, JSON.stringify([name]));
+          return [name];
+        }
       } catch (e) {
         console.error("Migration failed", e);
         return [];
@@ -39,27 +65,57 @@ export const getStoredWorkspaces = (): string[] => {
   }
 
   try {
-    return JSON.parse(workspacesJson);
-  } catch {
+    const parsed = JSON.parse(workspacesJson);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error("Failed to parse workspaces:", error);
     return [];
   }
 };
 
-export const saveWorkspaceList = (list: string[]) => {
-  localStorage.setItem(WORKSPACES_KEY, JSON.stringify(list));
+export const saveWorkspaceList = (list: string[]): boolean => {
+  try {
+    const json = JSON.stringify(list);
+    return safeLocalStorageSet(WORKSPACES_KEY, json);
+  } catch (error) {
+    console.error("Failed to save workspace list:", error);
+    return false;
+  }
 };
 
-export const saveWorkspaceData = (workspaceName: string, data: any) => {
-  localStorage.setItem(`${STORAGE_PREFIX}${workspaceName}`, JSON.stringify(data));
+export const saveWorkspaceData = (workspaceName: string, data: WorkspaceData): boolean => {
+  try {
+    const json = JSON.stringify(data);
+    return safeLocalStorageSet(`${STORAGE_PREFIX}${workspaceName}`, json);
+  } catch (error) {
+    console.error(`Failed to save workspace data (${workspaceName}):`, error);
+    return false;
+  }
 };
 
-export const loadWorkspaceData = (workspaceName: string) => {
-  const data = localStorage.getItem(`${STORAGE_PREFIX}${workspaceName}`);
-  return data ? JSON.parse(data) : null;
+export const loadWorkspaceData = (workspaceName: string): WorkspaceData | null => {
+  const data = safeLocalStorageGet(`${STORAGE_PREFIX}${workspaceName}`);
+  if (!data) return null;
+  
+  try {
+    const parsed = JSON.parse(data);
+    // Validate structure
+    if (typeof parsed === 'object' && parsed !== null) {
+      return {
+        activeTask: parsed.activeTask || null,
+        history: Array.isArray(parsed.history) ? parsed.history : [],
+        lastExportedMonth: parsed.lastExportedMonth || null
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error(`Failed to parse workspace data (${workspaceName}):`, error);
+    return null;
+  }
 };
 
-export const deleteWorkspaceData = (workspaceName: string) => {
-  localStorage.removeItem(`${STORAGE_PREFIX}${workspaceName}`);
+export const deleteWorkspaceData = (workspaceName: string): boolean => {
+  return safeLocalStorageRemove(`${STORAGE_PREFIX}${workspaceName}`);
 };
 
 // Legacy exports kept for CSV compatibility, updated to accept data directly

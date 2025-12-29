@@ -21,8 +21,8 @@ A modern, productivity-focused task and time tracking application built with Rea
 - **React 18.3.1** - UI framework
 - **TypeScript 5.0** - Type safety
 - **Vite 5.0** - Build tool and dev server
-- **Tailwind CSS** - Styling
-- **Lucide React** - Icons
+- **Tailwind CSS 3.4** - Utility-first CSS framework (configured with PostCSS)
+- **Lucide React** - Icon library
 - **Vercel Analytics** - Analytics integration
 - **Vercel Speed Insights** - Performance monitoring
 
@@ -106,17 +106,32 @@ chronos_vercel/
 ├── App.tsx              # Main application component
 ├── index.tsx            # Application entry point
 ├── index.html           # HTML template
+├── index.css            # Global styles and Tailwind directives
 ├── types.ts             # TypeScript type definitions
+├── constants.ts          # Application constants and configuration
 ├── vite.config.ts       # Vite configuration
 ├── tsconfig.json        # TypeScript configuration
+├── tailwind.config.js   # Tailwind CSS configuration
+├── postcss.config.js    # PostCSS configuration
 ├── package.json         # Dependencies and scripts
+├── components/          # Reusable React components
+│   ├── HistoryItem.tsx  # Task history item component
+│   └── NavButton.tsx    # Navigation button component
 └── services/
     └── storageService.ts # Local storage management and CSV utilities
 ```
 
+### Architecture Notes
+
+- **Component-Based**: Reusable components are extracted into the `components/` directory
+- **Type-Safe**: Full TypeScript coverage with proper interfaces and type definitions
+- **Error Handling**: Comprehensive error handling for localStorage operations
+- **Constants Management**: Centralized constants in `constants.ts` for maintainability
+- **Build Configuration**: Tailwind CSS is properly configured with PostCSS for optimal build performance
+
 ## Data Storage
 
-All data is stored in the browser's `localStorage`:
+All data is stored in the browser's `localStorage` with comprehensive error handling:
 - Workspace list: `chronos_workspaces`
 - Workspace data: `chronos_ws_[workspace_name]`
 
@@ -124,6 +139,12 @@ Each workspace stores:
 - Active task (if running)
 - Task history
 - Last exported month
+
+The storage service includes:
+- Automatic migration from legacy data format
+- Error handling for localStorage quota exceeded scenarios
+- Type-safe data structures
+- Validation for loaded data
 
 ## Deployment
 
@@ -197,23 +218,27 @@ Thanks for your contributions to Chronos Task Tracker! Here's how you can help:
 
 ### Code Style Guidelines
 
-- Use TypeScript for all new code
+- Use TypeScript for all new code with proper type definitions
 - Follow React best practices and hooks patterns
 - Maintain consistent formatting (the project uses standard formatting)
 - Add comments for complex logic
-- Keep components focused and modular
+- Keep components focused and modular (components are extracted to separate files)
 - Write self-documenting code with clear variable names
+- Use constants from `constants.ts` instead of magic strings/numbers
+- Handle errors gracefully, especially for localStorage operations
 
 ### Areas That Need Help
 
-- Performance optimizations
-- Additional export formats (JSON, PDF, etc.)
-- Enhanced statistics and analytics
-- UI/UX improvements
-- Mobile experience enhancements
-- Accessibility improvements
-- Unit and integration tests
-- Documentation improvements
+- **Testing**: Unit and integration tests (Vitest/Jest setup)
+- **Code Splitting**: Further component extraction (LandingPage, TimerView, HistoryView, etc.)
+- **Custom Hooks**: Extract timer, workspace, and task history logic into reusable hooks
+- **PWA Support**: Add manifest.json and service worker for offline functionality
+- **Accessibility**: Enhanced ARIA labels, keyboard navigation, and focus management
+- **Performance**: React.memo optimization, useEffect dependency review, virtualization for long lists
+- **Development Tooling**: ESLint, Prettier, and pre-commit hooks
+- **Additional Export Formats**: JSON, PDF export options
+- **Enhanced Statistics**: More detailed analytics and reporting
+- **UI/UX Improvements**: Additional features and refinements
 
 Thank you for contributing to Chronos Task Tracker! 🎉
 
@@ -227,5 +252,5 @@ I built this app for my own personal use. I've been using this app for more than
 
 ---
 
-Built with ❤️ using React, TypeScript, and Vite
+Built with ❤️ using React, TypeScript, Vite, and Tailwind CSS
 

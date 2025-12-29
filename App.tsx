@@ -27,6 +27,9 @@ import {
   downloadCSV, 
   getMonthKey 
 } from './services/storageService';
+import { HistoryItem } from './components/HistoryItem';
+import { NavButton } from './components/NavButton';
+import { CHART_DAYS, RECENT_ACTIVITIES_LIMIT, MIN_CHART_SCALE_SECONDS, TIME_FORMAT_OPTIONS, DATE_FORMAT_OPTIONS } from './constants';
 
 const App: React.FC = () => {
   const [activeTask, setActiveTask] = useState<TaskRecord | null>(null);
@@ -152,14 +155,14 @@ const App: React.FC = () => {
   // Calculate chart data for history view (Trailing 7 Days)
   const chartData = useMemo(() => {
     const dailyStats = [];
-    // Generate last 7 days based on local time
-    for (let i = 6; i >= 0; i--) {
+    // Generate last N days based on local time
+    for (let i = CHART_DAYS - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const offset = d.getTimezoneOffset();
       const local = new Date(d.getTime() - (offset * 60 * 1000));
       const dateStr = local.toISOString().split('T')[0];
-      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      const dayName = d.toLocaleDateString('en-US', DATE_FORMAT_OPTIONS);
       
       const dayTotal = history
         .filter(r => r.date === dateStr)
@@ -168,7 +171,7 @@ const App: React.FC = () => {
       dailyStats.push({ date: dateStr, dayName, duration: dayTotal });
     }
 
-    const maxDuration = Math.max(...dailyStats.map(d => d.duration), 3600); // Minimum scale of 1 hour
+    const maxDuration = Math.max(...dailyStats.map(d => d.duration), MIN_CHART_SCALE_SECONDS);
     return { dailyStats, maxDuration };
   }, [history]);
 
@@ -454,7 +457,7 @@ const App: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {history.slice(0, 5).map(item => (
+                  {history.slice(0, RECENT_ACTIVITIES_LIMIT).map(item => (
                     <HistoryItem 
                       key={item.id} 
                       item={item} 
@@ -728,54 +731,5 @@ const App: React.FC = () => {
     </div>
   );
 };
-
-// Robust HistoryItem with guaranteed click handling
-const HistoryItem: React.FC<{ item: TaskRecord, formatTime: (s: number) => string, onDelete: () => void }> = ({ item, formatTime, onDelete }) => (
-  <div className="bg-white p-5 rounded-[1.5rem] border border-slate-200 shadow-sm flex justify-between items-center group relative hover:border-slate-300 transition-all">
-    <div className="space-y-1.5 overflow-hidden pr-2 flex-grow">
-      <h5 className="font-black text-slate-800 truncate text-sm">{item.taskName}</h5>
-      <div className="flex items-center gap-3">
-        <span className="text-[10px] text-slate-400 tabular-nums font-bold">
-          {new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </span>
-        <div className="flex gap-1.5 overflow-hidden">
-          {item.tags.map(t => (
-            <span key={t} className="text-[9px] bg-slate-50 text-slate-500 px-2 py-0.5 rounded-lg lowercase font-black border border-slate-100">#{t}</span>
-          ))}
-        </div>
-      </div>
-    </div>
-    
-    <div className="flex items-center gap-4 flex-shrink-0 ml-4">
-      <div className="text-right">
-        <div className="text-base font-black tabular-nums text-slate-900">{formatTime(item.duration)}</div>
-        <div className="text-[9px] text-slate-400 font-black uppercase tracking-tighter">{item.date}</div>
-      </div>
-      <button 
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-75 cursor-pointer z-10 outline-none focus:ring-2 focus:ring-red-500/20"
-        aria-label="Delete Session"
-      >
-        <Trash2 size={20} className="pointer-events-none" />
-      </button>
-    </div>
-  </div>
-);
-
-const NavButton: React.FC<{ active: boolean, onClick: () => void, icon: React.ReactNode, label: string }> = ({ active, onClick, icon, label }) => (
-  <button 
-    onClick={onClick}
-    className={`flex flex-col items-center justify-center gap-1.5 transition-all flex-1 ${active ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-  >
-    <div className={`p-2 rounded-xl transition-colors ${active ? 'bg-indigo-50' : 'bg-transparent'}`}>
-      {icon}
-    </div>
-    <span className="text-[9px] font-black uppercase tracking-[0.2em]">{label}</span>
-  </button>
-);
 
 export default App;
